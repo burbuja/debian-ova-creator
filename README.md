@@ -19,25 +19,19 @@ sudo apt install -y wget qemu-utils
 Create a new directory:
 
 ```sh
- mkdir debian-ova
+mkdir debian-ova
 ```
 
 Change directory:
 
 ```sh
- cd debian-ova
+cd debian-ova
 ```
 
 Download this script:
 
 ```sh
 wget https://github.com/burbuja/debian-ova-creator/raw/refs/heads/master/debian-ova-creator.sh
-```
-
-Edit it:
-
-```sh
-nano debian-ova-creator.sh
 ```
 
 Change the permissions:
@@ -49,7 +43,7 @@ chmod +x debian-ova-creator.sh
 Execute it:
 
 ```sh
-./debian-ova-creator.sh
+./debian-ova-creator.sh -d [debian_version]
 ```
 
 ## License

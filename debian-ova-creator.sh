@@ -1,8 +1,77 @@
 #!/bin/bash
 
-DEBIAN_VERSION=12      # 11, 12, 13, sid
-DEBIAN_NAME=bookworm   # bullseye (11), bookworm (12), trixie/daily (13), sid/daily (sid)
-DEBIAN_ARCH=amd64      # amd64 (11, 12), amd64-daily (13, sid)
+debver=""
+debarch="amd64"
+
+show_help() {
+    cat << EOF
+Usage: $0 [options]
+
+Options:
+  -d <debian_version>  Specify Debian version (required).
+                       Examples: "11", "12", "13", "bullseye", "bookworm",
+                       "trixie", "sid"
+  -h                   Show this help message
+
+Examples:
+  $0 -d bullseye
+  $0 -d 12
+  $0 -d trixie
+  $0 -d sid
+EOF
+}
+
+while getopts ":d:h" opt; do
+    case "$opt" in
+        d)
+            debver="$OPTARG"
+            ;;
+        h)
+            show_help
+            exit 0
+            ;;
+        :)
+            echo "Error: Option -$OPTARG requires an argument." >&2
+            show_help
+            exit 1
+            ;;
+        \?)
+            echo "Error: Invalid option -$OPTARG" >&2
+            show_help
+            exit 1
+            ;;
+    esac
+done
+
+if [[ -z "$debver" ]]; then
+    echo "Error: Debian version is required (-d)" >&2
+    show_help
+    exit 1
+fi
+
+case "$debver" in
+    11|bullseye)
+        debver="11"
+        debcodename="bullseye"
+        ;;
+    12|bookworm)
+        debver="12"
+        debcodename="bookworm"
+        ;;
+    13|trixie)
+        debver="13"
+        debcodename="trixie"
+        ;;
+    sid)
+        debver="sid"
+        debcodename="sid/daily"
+        debarch="amd64-daily"
+        ;;
+esac
+
+DEBIAN_VERSION=${debver}
+DEBIAN_NAME=${debcodename}
+DEBIAN_ARCH=${debarch}
 
 # More information:
 # - https://knowledge.broadcom.com/external/article/315655/virtual-machine-hardware-versions.html
@@ -26,22 +95,22 @@ OVF_OS_TYPE=debian11_64Guest
 CURRENT_DATE=$(date +%Y%m%d)
 
 # You'll need the wget package
-if [ ! -f $FILE_NAME.$FILE_ORIG_EXT ]; then
-    wget $FILE_ORIG_URL
+if [ ! -f "$FILE_NAME.$FILE_ORIG_EXT" ]; then
+    wget "$FILE_ORIG_URL"
 else
     echo "The file $FILE_NAME.$FILE_ORIG_EXT was already downloaded"
 fi
 
 # You'll need the qemu-img package
-if [ ! -f $FILE_NAME.$FILE_DEST_EXT ]; then
-    qemu-img convert -f $FILE_ORIG_EXT -O $FILE_DEST_EXT -o subformat=streamOptimized $FILE_NAME.$FILE_ORIG_EXT $FILE_NAME.$FILE_DEST_EXT
+if [ ! -f "$FILE_NAME.$FILE_DEST_EXT" ]; then
+    qemu-img convert -f $FILE_ORIG_EXT -O $FILE_DEST_EXT -o subformat=streamOptimized "$FILE_NAME.$FILE_ORIG_EXT" "$FILE_NAME.$FILE_DEST_EXT"
 else
     echo "The file $FILE_NAME.$FILE_DEST_EXT was already created"
 fi
 
-FILE_DEST_SIZE=$(wc -c $FILE_NAME.$FILE_DEST_EXT | cut -d " " -f1)
+FILE_DEST_SIZE=$(wc -c "$FILE_NAME.$FILE_DEST_EXT" | cut -d " " -f1)
 
-cat <<EOF | tee $FILE_NAME.ovf > /dev/null
+cat <<EOF | tee "$FILE_NAME.ovf" > /dev/null
 <?xml version="1.0" encoding="UTF-8"?>
 <Envelope xmlns="http://schemas.dmtf.org/ovf/envelope/1" xmlns:cim="http://schemas.dmtf.org/wbem/wscim/1/common" xmlns:ovf="http://schemas.dmtf.org/ovf/envelope/1" xmlns:rasd="http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_ResourceAllocationSettingData" xmlns:vmw="http://www.vmware.com/schema/ovf" xmlns:vssd="http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_VirtualSystemSettingData" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <References>
@@ -230,15 +299,15 @@ cat <<EOF | tee $FILE_NAME.ovf > /dev/null
 </Envelope>
 EOF
 
-FILE_DEST_SUM=$(sha256sum $FILE_NAME.$FILE_DEST_EXT | cut -d " " -f1)
-FILE_OVF_SUM=$(sha256sum $FILE_NAME.ovf | cut -d " " -f1)
+FILE_DEST_SUM=$(sha256sum "$FILE_NAME.$FILE_DEST_EXT" | cut -d " " -f1)
+FILE_OVF_SUM=$(sha256sum "$FILE_NAME.ovf" | cut -d " " -f1)
 
-cat <<EOF | tee $FILE_NAME.$FILE_SIGN_EXT > /dev/null
+cat <<EOF | tee "$FILE_NAME.$FILE_SIGN_EXT" > /dev/null
 SHA256($FILE_NAME.$FILE_DEST_EXT)= $FILE_DEST_SUM
 SHA256($FILE_NAME.ovf)= $FILE_OVF_SUM
 EOF
 
-tar -vcf $FILE_NAME.ova \
-         $FILE_NAME.ovf \
-         $FILE_NAME.$FILE_SIGN_EXT \
-         $FILE_NAME.$FILE_DEST_EXT
+tar -vcf "$FILE_NAME.ova" \
+         "$FILE_NAME.ovf" \
+         "$FILE_NAME.$FILE_SIGN_EXT" \
+         "$FILE_NAME.$FILE_DEST_EXT"
