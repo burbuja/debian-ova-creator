@@ -9,7 +9,7 @@ Usage: $0 [options]
 
 Options:
   -d <debian_version>  Specify Debian version (required).
-                       Examples: "11", "12", "13", "bullseye", "bookworm",
+                       Supported: "11", "12", "13", "bullseye", "bookworm",
                        "trixie", "sid"
   -h                   Show this help message
 
@@ -66,6 +66,11 @@ case "$debver" in
         debver="sid"
         debcodename="sid/daily"
         debarch="amd64-daily"
+        ;;
+    *)
+        echo "Error: Unsupported version $debver" >&2
+        show_help
+        exit 1
         ;;
 esac
 
