@@ -8,10 +8,10 @@ The OVF file included into this script was taken from an Ubuntu OVA file.
 
 ## Dependencies
 
-This script depends of wget and qemu-img packages that you may install using the following command:
+This script depends on wget and qemu-img from the qemu-utils package that you may install using the following command:
 
 ```sh
-sudo apt install -y wget qemu-img
+sudo apt install -y wget qemu-utils
 ```
 
 ## Usage
@@ -31,7 +31,7 @@ Change directory:
 Download this script:
 
 ```sh
-wget https://github.com/burbuja/debian-ova-creator/blob/master/debian-ova-creator.sh
+wget https://github.com/burbuja/debian-ova-creator/raw/refs/heads/master/debian-ova-creator.sh
 ```
 
 Edit it:
